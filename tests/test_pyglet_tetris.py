@@ -5,7 +5,7 @@
 
 import unittest
 
-from pyglet_tetris import pyglet_tetris
+from pyglet_tetris import main
 
 
 class TestPyglet_tetris(unittest.TestCase):
