@@ -1,10 +1,7 @@
 import pyglet
 
-from pyglet_tetris.block import Block
-from pyglet_tetris.color import Color
 from pyglet_tetris.config import GameConfig
 from pyglet_tetris.game import Game
-from pyglet_tetris.shape import Shape, ShapeMaker, Tetromino
 
 
 class Tetris(pyglet.window.Window):
@@ -21,11 +18,16 @@ class Tetris(pyglet.window.Window):
         self.game = Game(game_config.width, game_config.height, self.block_size,
                          self.main_batch)
         self.push_handlers(self.game.key_handler)
-        self.push_handlers(self.game)
+        # self.push_handlers(self.game)
         pyglet.clock.schedule_interval(self.update, 1 / 120.0)
 
     def update(self, dt):
-        self.game.update(dt)
+        if self.game.game_over:
+            if not self.game.is_paused():
+                self.game.pause()
+                print('Game Over!')
+        else:
+            self.game.update(dt)
 
     def on_draw(self):
         self.clear()

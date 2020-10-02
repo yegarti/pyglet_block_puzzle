@@ -1,114 +1,83 @@
-import typing
+import random
 from abc import abstractmethod
-from enum import Enum
-
-import pyglet
 
 from pyglet_tetris.color import Color
 
 
-class Tetromino(Enum):
-    Square = 'square'
-    Straight = 'straight'
-    Ra = 'ra'
-
-
 class Shape:
-    def __init__(self, x, y, size, batch=None):
-        self.blocks = []
-        for cord in self.cords:
-            rect = pyglet.shapes.Rectangle(x,
-                                           y,
-                                           size,
-                                           size,
-                                           self.color.value,
-                                           batch=batch)
-            rect.anchor_x = - (cord[0] - self.center[0]) * size
-            rect.anchor_y = - (cord[1] - self.center[1]) * size
-            self.blocks.append(rect)
-        self._x = x
-        self._y = y
-
-    @property
-    def x(self):
-        return self._x
-
-    @x.setter
-    def x(self, value):
-        offset = value - self._x
-        for block in self.blocks:
-            block.x += offset
-        self._x = value
-
-    @property
-    def y(self):
-        return self._y
-
-    @y.setter
-    def y(self, value):
-        offset = value - self._y
-        for block in self.blocks:
-            block.y += offset
-        self._y = value
-
-    def rotate(self):
-        for block in self.blocks:
-            block.rotation += 90
-
     @property
     @abstractmethod
-    def cords(self) -> typing.List[typing.Tuple]:
+    def id(self):
         pass
 
     @property
     @abstractmethod
-    def center(self) -> typing.List[typing.Tuple]:
+    def cords(self):
         pass
 
     @property
     @abstractmethod
-    def color(self) -> Color:
+    def center(self):
         pass
 
-
-class ShapeMaker:
-    def __init__(self, size, batch=None):
-        self.size = size
-        self.batch = batch
-
-    def new(self, x, y, shape) -> Shape:
-        if shape == Tetromino.Straight:
-            return Straight(x, y, self.size, batch=self.batch)
-        if shape == Tetromino.Square:
-            return Square(x, y, self.size, batch=self.batch)
-        if shape == Tetromino.Ra:
-            return Ra(x, y, self.size, batch=self.batch)
-        else:
-            raise ValueError(f"Unknown shape: {shape}")
+    @property
+    @abstractmethod
+    def color(self):
+        pass
 
 
 class Square(Shape):
-    cords = [(0, 0),
+    id = 'O'
+    cords = ((0, 0),
              (1, 0),
              (0, 1),
-             (1, 1)]
+             (1, 1))
     center = (1, 1)
-    color = Color.RED
+    color = Color.YELLOW
 
 
 class Straight(Shape):
-    cords = [(0, 0),
+    id = 'I'
+    cords = ((0, 0),
              (1, 0),
              (2, 0),
-             (3, 0)]
+             (3, 0))
     center = (2, 0)
-    color = Color.BLUE
+    color = Color.TURQUOISE
 
 
 class Ra(Shape):
-    cords = [(0, 0),
+    id = 'L'
+    cords = ((0, 0),
              (1, 0),
              (1, 1),
-             (1, 2)]
+             (1, 2))
+    center = (1, 1)
+    color = Color.BLUE
+
+
+class Ri(Shape):
+    id = 'R'
+    cords = ((0, 0),
+             (0, 1),
+             (0, 2),
+             (1, 0))
     center = (1, 1)
     color = Color.ORANGE
+
+
+class ShapeHelper:
+    def __init__(self):
+        self._shapes = [
+            Square,
+            Ra,
+            Straight,
+            Ri,
+        ]
+        self._ids_shapes = {shape.id: shape for shape in self._shapes}
+
+    def get_shape_from_id(self, shape_id) -> Shape:
+        return self._ids_shapes[shape_id]
+
+    def get_random_shape(self):
+        return random.choice(self._shapes)
