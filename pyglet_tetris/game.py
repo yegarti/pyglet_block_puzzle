@@ -9,7 +9,9 @@ from pyglet_tetris.shape import ShapeHelper
 
 class Game:
 
-    MOVE_DELTA = 0.05
+    MOVE_SPEED_IN_SECONDS = 1 / 200.0
+    CONTINUES_MOVE_DELAY_IN_SECONDS = 1 / 20.0
+    DROP_SPEED_IN_SECONDS = 1 / 10.0
 
     def __init__(self, width, height, block_size, batch):
         self.block_size = block_size
@@ -18,7 +20,6 @@ class Game:
         self.piece_maker = ShapeHelper()
         self.batch = batch
         self.key_handler = pyglet.window.key.KeyStateHandler()
-        self.block_fall_speed_in_seconds = 0.1
         self.blocks = []
         self._latest_move = time.time()
         self._paused = False
@@ -31,7 +32,6 @@ class Game:
             self.game_over = True
         elif not self.board.is_piece_active():
             self._spawn_new_piece()
-        self.move(dt)
 
     def _spawn_new_piece(self):
         tetromino = self.piece_maker.get_random_shape()
@@ -50,7 +50,8 @@ class Game:
         pyglet.clock.unschedule(self.fall)
 
     def _schedule_clocks(self):
-        pyglet.clock.schedule_interval(self.fall, self.block_fall_speed_in_seconds)
+        pyglet.clock.schedule_interval(self.fall, self.DROP_SPEED_IN_SECONDS)
+        pyglet.clock.schedule_interval(self.move, self.MOVE_SPEED_IN_SECONDS)
 
     # noinspection PyAttributeOutsideInit
     def reset(self):
@@ -73,37 +74,26 @@ class Game:
 
     def is_paused(self):
         return self._paused
-    def on_key_press(self, symbol, modifiers):
-        if self._paused:
-            return
-        # if symbol == key.RIGHT:
-        #     self._active_piece.x += self.block_size
-        # if symbol == key.LEFT:
-        #     self._active_piece.x -= self.block_size
-        # if symbol == key.UP:
-        #     self._active_piece.rotate()
 
     def move(self, dt):
-        if self._paused:
+        if self._paused or self._is_move_continuous():
             return
-        if time.time() - self._latest_move < Game.MOVE_DELTA:
-            return
-        if self.key_handler[pyglet.window.key.RIGHT]:
-            self.board.move_active_piece('right')
-        if self.key_handler[pyglet.window.key.LEFT]:
-            self.board.move_active_piece('left')
-        #     for block in self._active_piece:
-        #         old_piece = block
-        #         new_piece = tuple(map(operator.add, old_piece, (1, 0)))
-        #         self.board[old_piece[1]][old_piece[0]] = 0
-        #         self.board[new_piece[1]][new_piece[0]] = 1
-        # elif self.key_handler[pyglet.window.key.LEFT]:
-        #     self._active_piece[0] -= (1, 0)
-        # else:
-        #     return
-        # self._print_board()
-        self._latest_move = time.time()
+        moved = False
+        if self.board.is_piece_active():
+            if self.key_handler[pyglet.window.key.RIGHT]:
+                self.board.move_right()
+                moved = True
+            if self.key_handler[pyglet.window.key.LEFT]:
+                self.board.move_left()
+                moved = True
+            if self.key_handler[pyglet.window.key.UP]:
+                self.board.rotate()
+                moved = True
+        if moved:
+            self._latest_move = time.time()
+
+    def _is_move_continuous(self):
+        return time.time() - self._latest_move < Game.CONTINUES_MOVE_DELAY_IN_SECONDS
 
     def fall(self, dt):
-        # self._active_piece.y -= self.block_size
-        self.board.fall()
+        self.board.drop()

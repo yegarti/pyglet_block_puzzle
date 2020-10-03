@@ -16,7 +16,13 @@ class Board:
         self._active_piece_position = None
         self._game_over = False
 
-    def move_active_piece(self, direction):
+    def move_right(self):
+        self._move_active_piece('right')
+
+    def move_left(self):
+        self._move_active_piece('left')
+
+    def _move_active_piece(self, direction):
         if not self._active_piece:
             raise RuntimeError("No active piece")
         if direction == 'left':
@@ -34,7 +40,7 @@ class Board:
 
         self._print_board()
 
-    def fall(self):
+    def drop(self):
         if self._active_piece:
             old_piece = self._active_piece_position
             new_piece = [(x, y+1) for (x, y) in old_piece]
@@ -44,6 +50,9 @@ class Board:
             else:
                 self._active_piece = None
         self._print_board()
+
+    def rotate(self):
+        pass
 
     def is_game_over(self):
         return self._game_over

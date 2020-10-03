@@ -18,7 +18,6 @@ class Tetris(pyglet.window.Window):
         self.game = Game(game_config.width, game_config.height, self.block_size,
                          self.main_batch)
         self.push_handlers(self.game.key_handler)
-        # self.push_handlers(self.game)
         pyglet.clock.schedule_interval(self.update, 1 / 120.0)
 
     def update(self, dt):
