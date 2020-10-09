@@ -14,29 +14,25 @@ class Board:
         self.width = width
         self._active_piece = None
         self._active_piece_position = None
+        self._active_piece_center = None
         self._game_over = False
 
     def move_right(self):
-        self._move_active_piece('right')
+        self._move_active_piece(1)
 
     def move_left(self):
-        self._move_active_piece('left')
+        self._move_active_piece(-1)
 
-    def _move_active_piece(self, direction):
+    def _move_active_piece(self, direction_offset):
         if not self._active_piece:
             raise RuntimeError("No active piece")
-        if direction == 'left':
-            offset = -1
-        elif direction == 'right':
-            offset = 1
-        else:
-            raise KeyError(f"Unknown direction {direction}")
 
         old_piece = self._active_piece_position
-        new_piece = [(x + offset, y) for (x, y) in old_piece]
+        new_piece = [(x + direction_offset, y) for (x, y) in old_piece]
         if self._is_legal_position(new_piece, old_piece):
             self._move_piece(old_piece, new_piece, self._active_piece.id)
             self._active_piece_position = new_piece
+            self._active_piece_center = (self._active_piece_center[0] + direction_offset, self._active_piece_center[1])
 
         self._print_board()
 
@@ -47,12 +43,13 @@ class Board:
             if self._is_legal_position(new_piece, old_piece):
                 self._move_piece(old_piece, new_piece, self._active_piece.id)
                 self._active_piece_position = new_piece
+                self._active_piece_center = (self._active_piece_center[0], self._active_piece_center[1] + 1)
             else:
                 self._active_piece = None
         self._print_board()
 
     def rotate(self):
-        pass
+        self._rotate_active_piece()
 
     def is_game_over(self):
         return self._game_over
@@ -68,6 +65,7 @@ class Board:
         self._move_piece(None, new_piece, piece.id)
         self._active_piece = piece
         self._active_piece_position = new_piece
+        self._active_piece_center = (piece.center[0] + spawn_position[0], piece.center[1])
 
     def get_blocks(self):
         blocks = {}
@@ -76,6 +74,14 @@ class Board:
                 if cell != self.EMPTY_SPACE:
                     blocks[(i, j)] = cell
         return blocks
+
+    def _rotate_active_piece(self):
+        center = self._active_piece_center
+        translated_pos = [(block[0] - center[0], block[1] - center[1]) for block in self._active_piece_position]
+        rotated_pos = [(- tpos[1], tpos[0]) for tpos in translated_pos]
+        new_pos = [(int(block[0] + center[0]), int(block[1] + center[1])) for block in rotated_pos]
+        self._move_piece(self._active_piece_position, new_pos, self._active_piece.id)
+        self._active_piece_position = new_pos
 
     def _move_piece(self, old_piece, new_piece, new_piece_id):
         if old_piece:

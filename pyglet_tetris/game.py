@@ -11,7 +11,7 @@ class Game:
 
     MOVE_SPEED_IN_SECONDS = 1 / 200.0
     CONTINUES_MOVE_DELAY_IN_SECONDS = 1 / 20.0
-    DROP_SPEED_IN_SECONDS = 1 / 10.0
+    DROP_SPEED_IN_SECONDS = 7 / 10.0
 
     def __init__(self, width, height, block_size, batch):
         self.block_size = block_size
@@ -75,6 +75,12 @@ class Game:
     def is_paused(self):
         return self._paused
 
+    def on_key_press(self, symbol, modifiers):
+        if self._paused:
+            return
+        if symbol == pyglet.window.key.UP:
+            self.board.rotate()
+
     def move(self, dt):
         if self._paused or self._is_move_continuous():
             return
@@ -85,9 +91,6 @@ class Game:
                 moved = True
             if self.key_handler[pyglet.window.key.LEFT]:
                 self.board.move_left()
-                moved = True
-            if self.key_handler[pyglet.window.key.UP]:
-                self.board.rotate()
                 moved = True
         if moved:
             self._latest_move = time.time()

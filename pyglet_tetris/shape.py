@@ -32,7 +32,7 @@ class Square(Shape):
              (1, 0),
              (0, 1),
              (1, 1))
-    center = (1, 1)
+    center = (0.5, 0.5)
     color = Color.YELLOW
 
 
@@ -62,7 +62,7 @@ class Ri(Shape):
              (0, 1),
              (0, 2),
              (1, 0))
-    center = (1, 1)
+    center = (0, 1)
     color = Color.ORANGE
 
 
