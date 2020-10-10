@@ -117,6 +117,10 @@ class Board:
                 self._active_piece = None
         self._print_board()
 
+    def full_drop(self):
+        while self._active_piece:
+            self.drop()
+
     def is_game_over(self):
         return self._game_over
 

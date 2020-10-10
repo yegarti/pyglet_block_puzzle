@@ -80,6 +80,8 @@ class Game:
             return
         if symbol == pyglet.window.key.UP:
             self.board.rotate()
+        if symbol == pyglet.window.key.SPACE:
+            self.board.full_drop()
 
     def move(self, dt):
         if self._paused or self._is_move_continuous():
@@ -92,6 +94,10 @@ class Game:
             if self.key_handler[pyglet.window.key.LEFT]:
                 self.board.move_left()
                 moved = True
+            if self.key_handler[pyglet.window.key.DOWN]:
+                self._reset_clocks()
+                self.board.drop()
+                moved = True
         if moved:
             self._latest_move = time.time()
 
@@ -100,3 +106,7 @@ class Game:
 
     def fall(self, dt):
         self.board.drop()
+
+    def _reset_clocks(self):
+        self._unschedule_clocks()
+        self._schedule_clocks()
