@@ -1,20 +1,87 @@
+import logging
 import typing
+from copy import copy
+from dataclasses import dataclass
 
 from pyglet_tetris.shape import Shape
+
+_logger = logging.getLogger(__name__)
+
+
+@dataclass
+class BoardBlock:
+    x: int
+    y: int
+
+    def __add__(self, other):
+        return BoardBlock(self.x + other.x, self.y + other.y)
+
+    def __iadd__(self, other):
+        self.x += other.x
+        self.y += other.y
+        return self
+
+
+@dataclass
+class BoardPiece:
+    _shape: Shape
+    _blocks: typing.List[BoardBlock]
+    _center: BoardBlock
+
+    @property
+    def id(self):
+        return self._shape.id
+
+    @property
+    def blocks(self):
+        return [BoardBlock(b.x, b.y) for b in self._blocks]
+
+    @property
+    def center(self):
+        return BoardBlock(self._center.x, self._center.y)
+
+    def move(self, x=0, y=0):
+        for block in self._blocks:
+            block += BoardBlock(x, y)
+        self._center += BoardBlock(x, y)
+
+    def rotate(self):
+        _logger.debug(f"Rotating piece")
+        current_pos = copy(self)
+        old_center = current_pos.center
+        current_pos.move(-old_center.x, -old_center.y)
+        for block in current_pos._blocks:
+            block.x, block.y = -block.y, block.x
+        current_pos.move(old_center.x, old_center.y)
+        for block in current_pos._blocks:
+            block.x, block.y = int(block.x), int(block.y)
+
+        self._blocks = current_pos._blocks
+        self._center = old_center
+        _logger.debug(f"Rotated piece position: {self}")
+
+    def __iter__(self):
+        def foo():
+            for block in self._blocks:
+                yield block
+        return foo()
+
+    def copy(self):
+        return BoardPiece(self._shape,
+                          self.blocks,
+                          BoardBlock(self._center.x, self._center.y))
 
 
 class Board:
     EMPTY_SPACE = ' '
 
-    _active_piece: typing.Union[None, Shape]
+    _active_piece: typing.Union[None, BoardPiece]
 
     def __init__(self, width, height):
         self._board = [[self.EMPTY_SPACE for _ in range(height)] for _ in range(width)]
         self.height = height
         self.width = width
         self._active_piece = None
-        self._active_piece_position = None
-        self._active_piece_center = None
         self._game_over = False
 
     def move_right(self):
@@ -27,29 +94,28 @@ class Board:
         if not self._active_piece:
             raise RuntimeError("No active piece")
 
-        old_piece = self._active_piece_position
-        new_piece = [(x + direction_offset, y) for (x, y) in old_piece]
-        if self._is_legal_position(new_piece, old_piece):
-            self._move_piece(old_piece, new_piece, self._active_piece.id)
-            self._active_piece_position = new_piece
-            self._active_piece_center = (self._active_piece_center[0] + direction_offset, self._active_piece_center[1])
+        _logger.info(f"Moving piece by x={direction_offset}")
+        new_piece = self._active_piece.copy()
+        new_piece.move(x=direction_offset)
+        if self._is_legal_position(new_piece, self._active_piece):
+            self._move_piece(self._active_piece, new_piece)
+            _logger.debug(f"Piece moved to: {self._active_piece}")
+            self._active_piece = new_piece
 
         self._print_board()
 
     def drop(self):
         if self._active_piece:
-            old_piece = self._active_piece_position
-            new_piece = [(x, y+1) for (x, y) in old_piece]
-            if self._is_legal_position(new_piece, old_piece):
-                self._move_piece(old_piece, new_piece, self._active_piece.id)
-                self._active_piece_position = new_piece
-                self._active_piece_center = (self._active_piece_center[0], self._active_piece_center[1] + 1)
+            _logger.info(f"Dropping piece")
+            moved_piece = self._active_piece.copy()
+            moved_piece.move(y=1)
+            if self._is_legal_position(moved_piece, self._active_piece):
+                _logger.debug(f"Piece dropped to: {self._active_piece}")
+                self._move_piece(self._active_piece, moved_piece)
+                self._active_piece = moved_piece
             else:
                 self._active_piece = None
         self._print_board()
-
-    def rotate(self):
-        self._rotate_active_piece()
 
     def is_game_over(self):
         return self._game_over
@@ -58,14 +124,18 @@ class Board:
         return self._active_piece is not None
 
     def spawn_piece(self, piece: Shape):
-        spawn_position = (self.width // 2 - 2, 0)
-        new_piece = [(x + spawn_position[0], y + spawn_position[1]) for (x, y) in piece.cords]
+        spawn_position = BoardBlock(self.width // 2 - 2, 0)
+        new_piece = [BoardBlock(x, y) + spawn_position for (x, y) in piece.cords]
+        center = BoardBlock(piece.center[0], piece.center[1]) + spawn_position
+        new_piece = BoardPiece(piece, new_piece, center)
+        _logger.info(f"Spawning new piece: {new_piece}")
+
         if not self._is_legal_position(new_piece):
+            _logger.info("Illegal start position, ending game")
             self._game_over = True
-        self._move_piece(None, new_piece, piece.id)
-        self._active_piece = piece
-        self._active_piece_position = new_piece
-        self._active_piece_center = (piece.center[0] + spawn_position[0], piece.center[1])
+
+        self._active_piece = new_piece
+        self._move_piece(None, self._active_piece)
 
     def get_blocks(self):
         blocks = {}
@@ -75,20 +145,19 @@ class Board:
                     blocks[(i, j)] = cell
         return blocks
 
-    def _rotate_active_piece(self):
-        center = self._active_piece_center
-        translated_pos = [(block[0] - center[0], block[1] - center[1]) for block in self._active_piece_position]
-        rotated_pos = [(- tpos[1], tpos[0]) for tpos in translated_pos]
-        new_pos = [(int(block[0] + center[0]), int(block[1] + center[1])) for block in rotated_pos]
-        self._move_piece(self._active_piece_position, new_pos, self._active_piece.id)
-        self._active_piece_position = new_pos
+    def rotate(self):
+        new_piece = self._active_piece.copy()
+        new_piece.rotate()
+        if self._is_legal_position(new_piece, self._active_piece):
+            self._move_piece(self._active_piece, new_piece)
+            self._active_piece = new_piece
 
-    def _move_piece(self, old_piece, new_piece, new_piece_id):
+    def _move_piece(self, old_piece, new_piece):
         if old_piece:
-            for (x, y) in old_piece:
-                self._board[x][y] = self.EMPTY_SPACE
-        for (x, y) in new_piece:
-            self._board[x][y] = new_piece_id
+            for block in old_piece:
+                self._board[block.x][block.y] = self.EMPTY_SPACE
+        for block in new_piece:
+            self._board[block.x][block.y] = new_piece.id
 
     def _print_board(self):
         for j in range(self.height):
@@ -127,14 +196,14 @@ class Board:
 
     def _is_in_boundaries(self, piece):
         return all(
-            map(lambda block: 0 <= block[0] < self.width and block[1] < self.height,
+            map(lambda block: 0 <= block.x < self.width and 0 <= block.y < self.height,
                 piece))
 
     def _is_collide(self, piece, ignore=None):
         if not ignore:
             ignore = []
         for block in piece:
-            cell = self._board[block[0]][block[1]]
+            cell = self._board[block.x][block.y]
             if cell != self.EMPTY_SPACE and block not in ignore:
                 return True
         return False

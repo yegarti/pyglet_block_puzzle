@@ -1,8 +1,14 @@
+import logging
+
 import pyglet
 
 from pyglet_tetris.config import GameConfig
 from pyglet_tetris.game import Game
 
+
+_logger = logging.getLogger()
+logging.basicConfig()
+_logger.setLevel(logging.DEBUG)
 
 class Tetris(pyglet.window.Window):
     def __init__(self, game_config: GameConfig):
