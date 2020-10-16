@@ -108,3 +108,17 @@ def test_piece_rotate(straight_piece: BoardPiece):
     assert straight_piece.center == old_center
     # assert all 'x' are the same after rotation
     assert len(set(map(lambda block: block.x, straight_piece.blocks))) == 1
+
+
+def test_full_drop(board):
+    board.spawn_piece(Straight)
+    board.full_drop()
+    assert not board.is_piece_active()
+    board.drop()
+
+
+def test_move_after_drop(board):
+    board.spawn_piece(Straight)
+    board.full_drop()
+    with pytest.raises(RuntimeError):
+        board.move_right()
