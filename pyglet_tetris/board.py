@@ -2,6 +2,7 @@ import logging
 import typing
 from copy import copy
 from dataclasses import dataclass
+from math import floor
 
 from pyglet_tetris.shape import Shape
 
@@ -54,7 +55,7 @@ class BoardPiece:
             block.x, block.y = -block.y, block.x
         current_pos.move(old_center.x, old_center.y)
         for block in current_pos._blocks:
-            block.x, block.y = int(block.x), int(block.y)
+            block.x, block.y = floor(block.x), floor(block.y)
 
         self._blocks = current_pos._blocks
         self._center = old_center
