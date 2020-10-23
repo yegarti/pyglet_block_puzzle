@@ -66,6 +66,36 @@ class Ri(Shape):
     color = Color.ORANGE
 
 
+class Ss(Shape):
+    id = 'S'
+    cords = ((0, 0),
+             (1, 0),
+             (1, 1),
+             (2, 1))
+    center = (1, 0.5)
+    color = Color.GREEN
+
+
+class Zed(Shape):
+    id = 'Z'
+    cords = ((0, 1),
+             (1, 1),
+             (1, 0),
+             (2, 0))
+    center = (1, 0.5)
+    color = Color.RED
+
+
+class Ti(Shape):
+    id = 'T'
+    cords = ((0, 0),
+             (1, 0),
+             (1, 1),
+             (2, 0))
+    center = (1, 0.5)
+    color = Color.PURPLE
+
+
 class ShapeHelper:
     def __init__(self):
         self._shapes = [
@@ -73,6 +103,9 @@ class ShapeHelper:
             Ra,
             Straight,
             Ri,
+            Zed,
+            Ti,
+            Ss,
         ]
         self._ids_shapes = {shape.id: shape for shape in self._shapes}
 
