@@ -1,3 +1,4 @@
+import logging
 import time
 
 import pyglet
@@ -5,6 +6,9 @@ import pyglet
 from pyglet_tetris.block import Block
 from pyglet_tetris.board import Board
 from pyglet_tetris.shape import ShapeHelper
+
+
+_logger = logging.getLogger(__name__)
 
 
 class Game:
@@ -31,6 +35,7 @@ class Game:
         if self.board.is_game_over():
             self.game_over = True
         elif not self.board.is_piece_active():
+            self._score_and_clear_completed_lines()
             self._spawn_new_piece()
 
     def _spawn_new_piece(self):
@@ -110,3 +115,8 @@ class Game:
     def _reset_clocks(self):
         self._unschedule_clocks()
         self._schedule_clocks()
+
+    def _score_and_clear_completed_lines(self):
+        if self.board.any_rows_completed():
+            _logger.debug("Scoring lines")
+            self.board.clear_completed_rows()

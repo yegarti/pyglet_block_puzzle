@@ -72,18 +72,19 @@ class BoardPiece:
                           self.blocks,
                           BoardBlock(self._center.x, self._center.y))
 
-
 class Board:
     EMPTY_SPACE = ' '
 
     _active_piece: typing.Union[None, BoardPiece]
 
-    def __init__(self, width, height):
+    def __init__(self, width, height, print_board=True):
         self._board = [[self.EMPTY_SPACE for _ in range(height)] for _ in range(width)]
         self.height = height
         self.width = width
         self._active_piece = None
         self._game_over = False
+        self._spawn_position = BoardBlock(self.width // 2 - 2, 0)
+        self._print_board = print_board
 
     def move_right(self):
         self._move_active_piece(1)
@@ -103,7 +104,7 @@ class Board:
             _logger.debug(f"Piece moved to: {self._active_piece}")
             self._active_piece = new_piece
 
-        self._print_board()
+        self._print_to_console()
 
     def drop(self):
         if self._active_piece:
@@ -116,7 +117,7 @@ class Board:
                 self._active_piece = moved_piece
             else:
                 self._active_piece = None
-        self._print_board()
+        self._print_to_console()
 
     def full_drop(self):
         while self._active_piece:
@@ -128,10 +129,61 @@ class Board:
     def is_piece_active(self):
         return self._active_piece is not None
 
+    def any_rows_completed(self) -> bool:
+        return len(self._calc_completed_rows()) > 0
+
+    def clear_completed_rows(self) -> int:
+        completed_rows = self._calc_completed_rows()
+        _logger.info(f"Clearing {len(completed_rows)} rows")
+        _logger.debug(f"Clearing rows: {completed_rows}")
+        for row_number in completed_rows[::-1]:
+            _logger.debug(f"Clearing row {row_number}")
+            for col in range(self.width):
+                self._board[col][row_number] = self.EMPTY_SPACE
+        self._skip_empty_rows()
+        return len(completed_rows)
+
+    def _calc_completed_rows(self) -> typing.List[int]:
+        completed_rows = [self._is_row_full(row) for row in self._transposed_board()]
+        return [i for i, row_completed, in enumerate(completed_rows) if row_completed]
+
+    def _calc_empty_rows(self):
+        completed_rows = [self._is_row_empty(row) for row in self._transposed_board()]
+        return [i for i, row_completed, in enumerate(completed_rows) if row_completed]
+
+    def _transposed_board(self):
+        return [*zip(*self._board)][::]
+
+    def _skip_empty_rows(self):
+        # from bottom to top
+        swapped = True
+        transposed_board = self._transposed_board()
+        while swapped:
+            swapped = False
+            row_number = self.height - 1
+            while row_number > 1:
+                if self._is_row_empty(transposed_board[row_number]) and \
+                        not self._is_row_empty(transposed_board[row_number - 1]):
+                    _logger.debug(f"Swapping rows {row_number}, {row_number - 1}")
+                    self._swap_rows(row_number, row_number - 1)
+                    transposed_board = self._transposed_board()
+                    swapped = True
+                row_number -= 1
+
+    def _swap_rows(self, row_num_a, row_num_b):
+        for col in range(self.width):
+            self._board[col][row_num_a], self._board[col][row_num_b] = \
+                self._board[col][row_num_b], self._board[col][row_num_a]
+
+    def _is_row_empty(self, row):
+        return all([self.EMPTY_SPACE == b for b in row])
+
+    def _is_row_full(self, row):
+        return self.EMPTY_SPACE not in row
+
     def spawn_piece(self, piece: Shape):
-        spawn_position = BoardBlock(self.width // 2 - 2, 0)
-        new_piece = [BoardBlock(x, y) + spawn_position for (x, y) in piece.cords]
-        center = BoardBlock(piece.center[0], piece.center[1]) + spawn_position
+        new_piece = [BoardBlock(x, y) + self.spawn_position for (x, y) in piece.cords]
+        center = BoardBlock(piece.center[0], piece.center[1]) + self.spawn_position
         new_piece = BoardPiece(piece, new_piece, center)
         _logger.info(f"Spawning new piece: {new_piece}")
 
@@ -142,7 +194,7 @@ class Board:
         self._active_piece = new_piece
         self._move_piece(None, self._active_piece)
 
-    def get_blocks(self):
+    def get_blocks(self) -> typing.Dict[typing.Tuple[int, int], str]:
         blocks = {}
         for i, column in enumerate(self._board):
             for j, cell in enumerate(column):
@@ -157,6 +209,14 @@ class Board:
             self._move_piece(self._active_piece, new_piece)
             self._active_piece = new_piece
 
+    @property
+    def spawn_position(self) -> BoardBlock:
+        return self._spawn_position
+
+    @spawn_position.setter
+    def spawn_position(self, value: BoardBlock):
+        self._spawn_position = value
+
     def _move_piece(self, old_piece, new_piece):
         if old_piece:
             for block in old_piece:
@@ -164,7 +224,10 @@ class Board:
         for block in new_piece:
             self._board[block.x][block.y] = new_piece.id
 
-    def _print_board(self):
+    def _print_to_console(self):
+        if not self._print_board:
+            return
+
         for j in range(self.height):
             for i in range(self.width):
                 if j == 0 and i == 0:

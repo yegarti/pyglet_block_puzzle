@@ -1,12 +1,14 @@
 import pytest
 
 from pyglet_tetris.board import Board, BoardBlock, BoardPiece
-from pyglet_tetris.shape import Straight
+from pyglet_tetris.color import Color
+from pyglet_tetris.shape import Straight, Ti, Shape
 
+BOARD_SIZE = 10
 
 @pytest.fixture()
 def board():
-    return Board(10, 10)
+    return Board(BOARD_SIZE, BOARD_SIZE, print_board=False)
 
 
 @pytest.fixture()
@@ -19,6 +21,16 @@ def straight_piece() -> BoardPiece:
     blocks = [BoardBlock(x, 0) for x in range(4)]
     center = BoardBlock(Straight.center[0], Straight.center[1])
     return BoardPiece(Straight(), blocks, center)
+
+
+@pytest.fixture()
+def line_shape() -> Shape:
+    class Line(Shape):
+        id = 'd'
+        cords = tuple([(x, 0) for x in range(BOARD_SIZE)])
+        center = (BOARD_SIZE // 2, 0)
+        color = Color.WHITE
+    return Line
 
 
 def test_board_new(board):
@@ -122,3 +134,100 @@ def test_move_after_drop(board):
     board.full_drop()
     with pytest.raises(RuntimeError):
         board.move_right()
+
+
+def test_no_rows_completed(board):
+    assert not board.any_rows_completed()
+    assert board.clear_completed_rows() == 0
+    board.spawn_piece(Straight)
+    board.full_drop()
+    assert not board.any_rows_completed()
+    assert board.clear_completed_rows() == 0
+
+
+def test_rows_completed(board, line_shape):
+    board.spawn_position = BoardBlock(0, 0)
+
+    board.spawn_piece(line_shape)
+    board.full_drop()
+    assert board.any_rows_completed()
+    assert board.clear_completed_rows() == 1
+    assert not board.any_rows_completed()
+    assert board.clear_completed_rows() == 0
+
+    board.spawn_piece(line_shape)
+    board.full_drop()
+    board.spawn_piece(line_shape)
+    board.full_drop()
+    assert board.any_rows_completed()
+    assert board.clear_completed_rows() == 2
+
+
+def test_drop_after_row_completed(board, line_shape):
+    """
+    |      |          |      |
+    |      |          |      |
+    |---   |    --->  |      |
+    |------|          |---   |
+    """
+    board.spawn_position = BoardBlock(0, 0)
+
+    board.spawn_piece(line_shape)
+    board.full_drop()
+    board.spawn_piece(Straight)
+    board.full_drop()
+
+    assert board.any_rows_completed()
+    assert board.clear_completed_rows() == 1
+    # check that pieces above the cleared line has dropped
+    assert (board.height - 1) in map(lambda block: block[1], board.get_blocks())
+
+
+def test_drop_after_row_completed_2(board, line_shape):
+    """
+    |---   |          |      |
+    |------|          |      |
+    |---   |    --->  |---   |
+    |------|          |---   |
+    """
+    board.spawn_position = BoardBlock(0, 0)
+
+    board.spawn_piece(line_shape)
+    board.full_drop()
+    board.spawn_piece(Straight)
+    board.full_drop()
+    board.spawn_piece(line_shape)
+    board.full_drop()
+    board.spawn_piece(Straight)
+    board.full_drop()
+
+    assert board.any_rows_completed()
+    assert board.clear_completed_rows() == 2
+    # check that pieces above the cleared line has dropped
+    assert (board.height - 1) in map(lambda block: block[1], board.get_blocks())
+    assert (board.height - 2) in map(lambda block: block[1], board.get_blocks())
+
+
+def test_drop_after_row_completed_3(board, line_shape):
+    """
+    |---   |          |      |
+    |------|    --->  |      |
+    |------|          |---   |
+    |---   |          |---   |
+    """
+    board.spawn_position = BoardBlock(0, 0)
+
+    board.spawn_piece(Straight)
+    board.full_drop()
+    board.spawn_piece(line_shape)
+    board.full_drop()
+    board.spawn_piece(line_shape)
+    board.full_drop()
+    board.spawn_piece(Straight)
+    board.full_drop()
+
+    assert board.any_rows_completed()
+    assert board.clear_completed_rows() == 2
+    # check that pieces above the cleared line has dropped
+    assert (board.height - 1) in map(lambda block: block[1], board.get_blocks())
+    assert (board.height - 2) in map(lambda block: block[1], board.get_blocks())
