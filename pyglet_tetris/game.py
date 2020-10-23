@@ -63,6 +63,7 @@ class Game:
         self.board = Board(self.width // self.block_size,
                            self.height // self.block_size)
         self.blocks.clear()
+        self.piece_maker.reset()
         self._paused = False
         self.game_over = False
         self._spawn_new_piece()

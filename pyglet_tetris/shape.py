@@ -108,9 +108,19 @@ class ShapeHelper:
             Ss,
         ]
         self._ids_shapes = {shape.id: shape for shape in self._shapes}
+        self._bag_of_shapes = set(self._shapes)
 
     def get_shape_from_id(self, shape_id) -> Shape:
         return self._ids_shapes[shape_id]
 
+    def reset(self):
+        self._bag_of_shapes = set()
+
     def get_random_shape(self):
-        return random.choice(self._shapes)
+        print("!!!!!!!!!!*************{}**************".format(self._bag_of_shapes))
+        if not self._bag_of_shapes:
+            self._bag_of_shapes = set(self._shapes)
+        shape = random.sample(self._bag_of_shapes, k=1)[0]
+        self._bag_of_shapes.remove(shape)
+        print("***********************{}**************".format(self._bag_of_shapes))
+        return shape
