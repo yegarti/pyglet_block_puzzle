@@ -3,6 +3,7 @@ import time
 
 import pyglet
 
+from pyglet.window import key
 from pyglet_tetris.block import Block
 from pyglet_tetris.board import Board
 from pyglet_tetris.shape import ShapeHelper
@@ -16,6 +17,9 @@ class Game:
     MOVE_SPEED_IN_SECONDS = 1 / 200.0
     CONTINUES_MOVE_DELAY_IN_SECONDS = 1 / 20.0
     DROP_SPEED_IN_SECONDS = 7 / 10.0
+    SCORE_LINES = {0: 0, 1: 100, 2: 300, 3: 500, 4: 800}
+    SCORE_SOFT_DROP = 1
+    SCORE_HARD_DROP = 2
 
     def __init__(self, width, height, block_size, batch):
         self.block_size = block_size
@@ -23,10 +27,11 @@ class Game:
         self.height = height
         self.piece_maker = ShapeHelper()
         self.batch = batch
-        self.key_handler = pyglet.window.key.KeyStateHandler()
+        self.key_handler = key.KeyStateHandler()
         self.blocks = []
         self._latest_move = time.time()
         self._paused = False
+        self._score = 0
         self.game_over = False
         self.reset()
 
@@ -65,10 +70,25 @@ class Game:
         self.blocks.clear()
         self.piece_maker.reset()
         self._paused = False
+        self._score = 0
+        self._level = 1
         self.game_over = False
         self._spawn_new_piece()
         self._unschedule_clocks()
         self._schedule_clocks()
+
+    @property
+    def level(self):
+        return self._level
+
+    @property
+    def score(self):
+        return self._score
+
+    @score.setter
+    def score(self, score):
+        self._score = score
+        _logger.debug(f"New score: {self._score}")
 
     def pause(self):
         if not self._paused:
@@ -84,31 +104,35 @@ class Game:
     def on_key_press(self, symbol, modifiers):
         if self._paused:
             return
-        if symbol == pyglet.window.key.UP:
+        if symbol == key.UP or symbol == key.W:
             self.board.rotate()
-        if symbol == pyglet.window.key.SPACE:
-            self.board.full_drop()
+        if symbol == key.SPACE:
+            self.score += self.board.full_drop() * self.SCORE_HARD_DROP
 
     def move(self, dt):
         if self._paused or self._is_move_continuous():
             return
         moved = False
         if self.board.is_piece_active():
-            if self.key_handler[pyglet.window.key.RIGHT]:
+            if self.key_handler[key.RIGHT] or self.key_handler[key.D]:
                 self.board.move_right()
                 moved = True
-            if self.key_handler[pyglet.window.key.LEFT]:
+            if self.key_handler[key.LEFT] or self.key_handler[key.A]:
                 self.board.move_left()
                 moved = True
-            if self.key_handler[pyglet.window.key.DOWN]:
-                self._reset_clocks()
-                self.board.drop()
+            if self.key_handler[key.DOWN] or self.key_handler[key.S]:
+                self.soft_drop()
                 moved = True
         if moved:
             self._latest_move = time.time()
 
     def _is_move_continuous(self):
         return time.time() - self._latest_move < Game.CONTINUES_MOVE_DELAY_IN_SECONDS
+
+    def soft_drop(self):
+        self._reset_clocks()
+        self.board.drop()
+        self.score += self.SCORE_SOFT_DROP
 
     def fall(self, dt):
         self.board.drop()
@@ -119,5 +143,6 @@ class Game:
 
     def _score_and_clear_completed_lines(self):
         if self.board.any_rows_completed():
-            _logger.debug("Scoring lines")
-            self.board.clear_completed_rows()
+            full_rows = self.board.clear_completed_rows()
+            _logger.debug(f"Scoring for {full_rows} rows")
+            self.score += self._level * self.SCORE_LINES[full_rows]

@@ -120,8 +120,11 @@ class Board:
         self._print_to_console()
 
     def full_drop(self):
+        cells_dropped = 0
         while self._active_piece:
             self.drop()
+            cells_dropped += 1
+        return cells_dropped
 
     def is_game_over(self):
         return self._game_over

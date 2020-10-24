@@ -39,3 +39,13 @@ def test_key_full_drop(game: Game):
     assert game.board.get_blocks() != blocks
     assert not game.board.is_piece_active()
 
+
+def test_score_hard_drop(game: Game):
+    game.on_key_press(pyglet.window.key.SPACE, None)
+    assert 0 < game.score <= game.height * 2
+
+
+def test_score_soft_drop(game: Game):
+    for _ in range(5):
+        game.soft_drop()
+    assert 0 < game.score <= 5
