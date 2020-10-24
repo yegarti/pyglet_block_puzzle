@@ -21,24 +21,31 @@ class Game:
     SCORE_SOFT_DROP = 1
     SCORE_HARD_DROP = 2
 
-    def __init__(self, width, height, block_size, batch):
+    def __init__(self, width, height, block_size, batch, text_batch):
         self.block_size = block_size
         self.width = width
         self.height = height
         self.piece_maker = ShapeHelper()
         self.batch = batch
+        self._text_batch = text_batch
         self.key_handler = key.KeyStateHandler()
         self.blocks = []
         self._latest_move = time.time()
         self._paused = False
+        self._game_paused_text = None
         self._score = 0
         self.game_over = False
+        self._score_label = pyglet.text.Label(
+            f'Score: {self.score}',
+            font_name='Times New Roman',
+            font_size=18, x=0, y=self.height, batch=self._text_batch, anchor_y='top')
         self.reset()
 
     def update(self, dt):
         self._redraw_pieces()
         if self.board.is_game_over():
             self.game_over = True
+            _logger.info("Game over!")
         elif not self.board.is_piece_active():
             self._score_and_clear_completed_lines()
             self._spawn_new_piece()
@@ -51,7 +58,7 @@ class Game:
         self.blocks.clear()
         for (x, y), piece_id in self.board.get_blocks().items():
             x = x * self.block_size
-            y = self.height - (y * self.block_size)
+            y = self.height - ((y + 1) * self.block_size)
             block_color = self.piece_maker.get_shape_from_id(piece_id).color
             self.blocks.append(
                 Block(block_color, x=x, y=y, width=self.block_size, height=self.block_size, batch=self.batch))
@@ -70,7 +77,9 @@ class Game:
         self.blocks.clear()
         self.piece_maker.reset()
         self._paused = False
+        self._toggle_game_paused_text(False)
         self._score = 0
+        self._score_label.text = f'Score: 0'
         self._level = 1
         self.game_over = False
         self._spawn_new_piece()
@@ -88,14 +97,19 @@ class Game:
     @score.setter
     def score(self, score):
         self._score = score
+        self._score_label.text = f'Score: {self._score}'
         _logger.debug(f"New score: {self._score}")
 
-    def pause(self):
+    def pause(self, show_text=True):
         if not self._paused:
+            _logger.info("Game paused")
             self._paused = True
+            self._toggle_game_paused_text(show_text)
             self._unschedule_clocks()
         else:
+            _logger.info("Game unpaused")
             self._paused = False
+            self._toggle_game_paused_text(False)
             self._schedule_clocks()
 
     def is_paused(self):
@@ -146,3 +160,15 @@ class Game:
             full_rows = self.board.clear_completed_rows()
             _logger.debug(f"Scoring for {full_rows} rows")
             self.score += self._level * self.SCORE_LINES[full_rows]
+
+    def _toggle_game_paused_text(self, toggle):
+        if toggle:
+            self._game_paused_text = pyglet.text.Label(
+                f'Paused',
+                font_name='Times New Roman',
+                font_size=18,
+                x=self.width // 2, y=self.height // 2, anchor_x='center', anchor_y='center',
+                batch=self._text_batch)
+            self._game_paused_text.set_style('background_color', (0, 0, 0, 255))
+        elif self._game_paused_text:
+            self._game_paused_text.delete()

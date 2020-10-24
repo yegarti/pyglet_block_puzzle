@@ -6,7 +6,7 @@ from pyglet_tetris.game import Game
 
 @pytest.fixture()
 def game():
-    return Game(200, 100, 10, None)
+    return Game(200, 100, 10, None, None)
 
 
 def test_game_init(game: Game):

@@ -21,8 +21,10 @@ class Tetris(pyglet.window.Window):
         )
         self.block_size = game_config.width // 10
         self.main_batch = pyglet.graphics.Batch()
+        self.text_batch = pyglet.graphics.Batch()
         self.game = Game(game_config.width, game_config.height, self.block_size,
-                         self.main_batch)
+                         self.main_batch,
+                         self.text_batch)
         self.push_handlers(self.game.key_handler)
         self.push_handlers(self.game)
         pyglet.clock.schedule_interval(self.update, 1 / 120.0)
@@ -30,7 +32,7 @@ class Tetris(pyglet.window.Window):
     def update(self, dt):
         if self.game.game_over:
             if not self.game.is_paused():
-                self.game.pause()
+                self.game.pause(show_text=False)
                 print('Game Over!')
         else:
             self.game.update(dt)
@@ -38,6 +40,7 @@ class Tetris(pyglet.window.Window):
     def on_draw(self):
         self.clear()
         self.main_batch.draw()
+        self.text_batch.draw()
 
     def on_key_press(self, symbol, modifiers):
         super().on_key_press(symbol, modifiers)

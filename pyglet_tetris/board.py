@@ -206,11 +206,12 @@ class Board:
         return blocks
 
     def rotate(self):
-        new_piece = self._active_piece.copy()
-        new_piece.rotate()
-        if self._is_legal_position(new_piece, self._active_piece):
-            self._move_piece(self._active_piece, new_piece)
-            self._active_piece = new_piece
+        if self._active_piece:
+            new_piece = self._active_piece.copy()
+            new_piece.rotate()
+            if self._is_legal_position(new_piece, self._active_piece):
+                self._move_piece(self._active_piece, new_piece)
+                self._active_piece = new_piece
 
     @property
     def spawn_position(self) -> BoardBlock:

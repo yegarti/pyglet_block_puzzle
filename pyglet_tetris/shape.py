@@ -117,10 +117,8 @@ class ShapeHelper:
         self._bag_of_shapes = set()
 
     def get_random_shape(self):
-        print("!!!!!!!!!!*************{}**************".format(self._bag_of_shapes))
         if not self._bag_of_shapes:
             self._bag_of_shapes = set(self._shapes)
         shape = random.sample(self._bag_of_shapes, k=1)[0]
         self._bag_of_shapes.remove(shape)
-        print("***********************{}**************".format(self._bag_of_shapes))
         return shape
