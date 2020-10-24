@@ -48,6 +48,8 @@ class Tetris(pyglet.window.Window):
             self.game.reset()
         if symbol == pyglet.window.key.P:
             self.game.pause()
+        if symbol == pyglet.window.key.L:
+            self.game.level_up()
 
 
 if __name__ == '__main__':

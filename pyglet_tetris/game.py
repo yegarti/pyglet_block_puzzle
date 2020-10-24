@@ -16,10 +16,11 @@ class Game:
 
     MOVE_SPEED_IN_SECONDS = 1 / 200.0
     CONTINUES_MOVE_DELAY_IN_SECONDS = 1 / 20.0
-    DROP_SPEED_IN_SECONDS = 7 / 10.0
     SCORE_LINES = {0: 0, 1: 100, 2: 300, 3: 500, 4: 800}
     SCORE_SOFT_DROP = 1
     SCORE_HARD_DROP = 2
+    LINES_PER_LEVEL = 10
+    MAX_LEVEL = 20
 
     def __init__(self, width, height, block_size, batch, text_batch):
         self.block_size = block_size
@@ -33,6 +34,8 @@ class Game:
         self._latest_move = time.time()
         self._paused = False
         self._game_paused_text = None
+        self._cleared_lines = 0
+        self._new_level_text = None
         self._score = 0
         self.game_over = False
         self._score_label = pyglet.text.Label(
@@ -48,11 +51,13 @@ class Game:
             _logger.info("Game over!")
         elif not self.board.is_piece_active():
             self._score_and_clear_completed_lines()
+            self._update_game_level()
             self._spawn_new_piece()
 
     def _spawn_new_piece(self):
         tetromino = self.piece_maker.get_random_shape()
         self.board.spawn_piece(tetromino)
+        self._reset_clocks()
 
     def _redraw_pieces(self):
         self.blocks.clear()
@@ -67,7 +72,7 @@ class Game:
         pyglet.clock.unschedule(self.fall)
 
     def _schedule_clocks(self):
-        pyglet.clock.schedule_interval(self.fall, self.DROP_SPEED_IN_SECONDS)
+        pyglet.clock.schedule_interval(self.fall, self.gravity)
         pyglet.clock.schedule_interval(self.move, self.MOVE_SPEED_IN_SECONDS)
 
     # noinspection PyAttributeOutsideInit
@@ -81,10 +86,16 @@ class Game:
         self._score = 0
         self._score_label.text = f'Score: 0'
         self._level = 1
+        self._gravity_bps = 0.7  # seconds per block
         self.game_over = False
+        self._cleared_lines = 0
         self._spawn_new_piece()
         self._unschedule_clocks()
         self._schedule_clocks()
+
+    @property
+    def gravity(self):
+        return self._gravity_bps
 
     @property
     def level(self):
@@ -160,6 +171,7 @@ class Game:
             full_rows = self.board.clear_completed_rows()
             _logger.debug(f"Scoring for {full_rows} rows")
             self.score += self._level * self.SCORE_LINES[full_rows]
+            self._cleared_lines += full_rows
 
     def _toggle_game_paused_text(self, toggle):
         if toggle:
@@ -172,3 +184,21 @@ class Game:
             self._game_paused_text.set_style('background_color', (0, 0, 0, 255))
         elif self._game_paused_text:
             self._game_paused_text.delete()
+
+    def _update_game_level(self):
+        if self._cleared_lines >= self.LINES_PER_LEVEL and self._level < self.MAX_LEVEL:
+            self._cleared_lines -= self.LINES_PER_LEVEL
+            self._gravity_bps *= 0.8
+            self._level += 1
+            new_level_text = pyglet.text.Label(
+                f'Level {self._level}',
+                font_name='Times New Roman',
+                font_size=18,
+                x=self.width // 2, y=self.height - (self.height // 4), anchor_x='center', anchor_y='center',
+                batch=self._text_batch)
+            new_level_text.set_style('background_color', (0, 0, 0, 255))
+            pyglet.clock.schedule_once(lambda dt: new_level_text.delete(), 2)
+
+    def level_up(self):
+        self._cleared_lines = self.LINES_PER_LEVEL
+        self._update_game_level()
