@@ -5,7 +5,7 @@ import pyglet
 
 from pyglet.window import key
 from pyglet_tetris.block import Block
-from pyglet_tetris.board import Board
+from pyglet_tetris.board.board import Board
 from pyglet_tetris.shape import ShapeHelper
 
 
@@ -22,7 +22,8 @@ class Game:
     LINES_PER_LEVEL = 10
     MAX_LEVEL = 20
 
-    def __init__(self, width, height, block_size, batch, text_batch):
+    def __init__(self, width, height, block_size, batch, text_batch, print_to_console=False):
+        self._print_to_console = print_to_console
         self.block_size = block_size
         self.width = width
         self.height = height
@@ -78,7 +79,8 @@ class Game:
     # noinspection PyAttributeOutsideInit
     def reset(self):
         self.board = Board(self.width // self.block_size,
-                           self.height // self.block_size)
+                           self.height // self.block_size,
+                           print_board=self._print_to_console)
         self.blocks.clear()
         self.piece_maker.reset()
         self._paused = False
@@ -109,7 +111,7 @@ class Game:
     def score(self, score):
         self._score = score
         self._score_label.text = f'Score: {self._score}'
-        _logger.debug(f"New score: {self._score}")
+        _logger.info(f"New score: {self._score}")
 
     def pause(self, show_text=True):
         if not self._paused:

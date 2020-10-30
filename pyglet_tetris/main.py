@@ -2,29 +2,34 @@ import logging
 
 import pyglet
 
-from pyglet_tetris.config import GameConfig
 from pyglet_tetris.game import Game
 
+DEBUG = False
 
 _logger = logging.getLogger()
 logging.basicConfig()
-_logger.setLevel(logging.DEBUG)
+_logger.setLevel(logging.DEBUG if DEBUG else logging.INFO)
+
+WIDTH = 250
+HEIGHT = 500
+BLOCK_SIZE = WIDTH // 10
+
 
 class Tetris(pyglet.window.Window):
-    def __init__(self, game_config: GameConfig):
+    def __init__(self, width, height, block_size):
         super().__init__(
             caption='Tetris',
-            width=game_config.width,
-            height=game_config.height,
-            fullscreen=game_config.full_screen,
+            width=width,
+            height=height,
+            fullscreen=False,
             resizable=False
         )
-        self.block_size = game_config.width // 10
         self.main_batch = pyglet.graphics.Batch()
         self.text_batch = pyglet.graphics.Batch()
-        self.game = Game(game_config.width, game_config.height, self.block_size,
+        self.game = Game(width, height, block_size,
                          self.main_batch,
-                         self.text_batch)
+                         self.text_batch,
+                         print_to_console=DEBUG)
         self.push_handlers(self.game.key_handler)
         self.push_handlers(self.game)
         pyglet.clock.schedule_interval(self.update, 1 / 120.0)
@@ -53,6 +58,5 @@ class Tetris(pyglet.window.Window):
 
 
 if __name__ == '__main__':
-    config = GameConfig(load_saved_config=True)
-    game = Tetris(config)
+    game = Tetris(WIDTH, HEIGHT, BLOCK_SIZE)
     pyglet.app.run()

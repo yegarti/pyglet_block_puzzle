@@ -1,76 +1,13 @@
 import logging
 import typing
-from copy import copy
-from dataclasses import dataclass
-from math import floor
 
+from pyglet_tetris.board.block import BoardBlock
+from pyglet_tetris.board.board_printer import BoardPrinter
+from pyglet_tetris.board.piece import BoardPiece
 from pyglet_tetris.shape import Shape
 
 _logger = logging.getLogger(__name__)
 
-
-@dataclass
-class BoardBlock:
-    x: int
-    y: int
-
-    def __add__(self, other):
-        return BoardBlock(self.x + other.x, self.y + other.y)
-
-    def __iadd__(self, other):
-        self.x += other.x
-        self.y += other.y
-        return self
-
-
-@dataclass
-class BoardPiece:
-    _shape: Shape
-    _blocks: typing.List[BoardBlock]
-    _center: BoardBlock
-
-    @property
-    def id(self):
-        return self._shape.id
-
-    @property
-    def blocks(self):
-        return [BoardBlock(b.x, b.y) for b in self._blocks]
-
-    @property
-    def center(self):
-        return BoardBlock(self._center.x, self._center.y)
-
-    def move(self, x=0, y=0):
-        for block in self._blocks:
-            block += BoardBlock(x, y)
-        self._center += BoardBlock(x, y)
-
-    def rotate(self):
-        _logger.debug(f"Rotating piece")
-        current_pos = copy(self)
-        old_center = current_pos.center
-        current_pos.move(-old_center.x, -old_center.y)
-        for block in current_pos._blocks:
-            block.x, block.y = -block.y, block.x
-        current_pos.move(old_center.x, old_center.y)
-        for block in current_pos._blocks:
-            block.x, block.y = floor(block.x), floor(block.y)
-
-        self._blocks = current_pos._blocks
-        self._center = old_center
-        _logger.debug(f"Rotated piece position: {self}")
-
-    def __iter__(self):
-        def foo():
-            for block in self._blocks:
-                yield block
-        return foo()
-
-    def copy(self):
-        return BoardPiece(self._shape,
-                          self.blocks,
-                          BoardBlock(self._center.x, self._center.y))
 
 class Board:
     EMPTY_SPACE = ' '
@@ -85,6 +22,7 @@ class Board:
         self._game_over = False
         self._spawn_position = BoardBlock(self.width // 2 - 2, 0)
         self._print_board = print_board
+        self._board_printer = BoardPrinter(self._board, width, height)
 
     def move_right(self):
         self._move_active_piece(1)
@@ -96,7 +34,7 @@ class Board:
         if not self._active_piece:
             raise RuntimeError("No active piece")
 
-        _logger.info(f"Moving piece by x={direction_offset}")
+        _logger.debug(f"Moving piece by x={direction_offset}")
         new_piece = self._active_piece.copy()
         new_piece.move(x=direction_offset)
         if self._is_legal_position(new_piece, self._active_piece):
@@ -104,11 +42,12 @@ class Board:
             _logger.debug(f"Piece moved to: {self._active_piece}")
             self._active_piece = new_piece
 
-        self._print_to_console()
+        if self._print_board:
+            self._board_printer.print_to_console()
 
     def drop(self):
         if self._active_piece:
-            _logger.info(f"Dropping piece")
+            _logger.debug(f"Dropping piece")
             moved_piece = self._active_piece.copy()
             moved_piece.move(y=1)
             if self._is_legal_position(moved_piece, self._active_piece):
@@ -117,7 +56,9 @@ class Board:
                 self._active_piece = moved_piece
             else:
                 self._active_piece = None
-        self._print_to_console()
+
+        if self._print_board:
+            self._board_printer.print_to_console()
 
     def full_drop(self):
         cells_dropped = 0
@@ -137,7 +78,7 @@ class Board:
 
     def clear_completed_rows(self) -> int:
         completed_rows = self._calc_completed_rows()
-        _logger.info(f"Clearing {len(completed_rows)} rows")
+        _logger.info(f"Clearing {len(completed_rows)} lines")
         _logger.debug(f"Clearing rows: {completed_rows}")
         for row_number in completed_rows[::-1]:
             _logger.debug(f"Clearing row {row_number}")
@@ -188,7 +129,8 @@ class Board:
         new_piece = [BoardBlock(x, y) + self.spawn_position for (x, y) in piece.cords]
         center = BoardBlock(piece.center[0], piece.center[1]) + self.spawn_position
         new_piece = BoardPiece(piece, new_piece, center)
-        _logger.info(f"Spawning new piece: {new_piece}")
+        _logger.info(f"Spawning new piece: {new_piece.shape.__name__}")
+        _logger.debug(f"Spawning new piece: {new_piece}")
 
         if not self._is_legal_position(new_piece):
             _logger.info("Illegal start position, ending game")
@@ -227,40 +169,6 @@ class Board:
                 self._board[block.x][block.y] = self.EMPTY_SPACE
         for block in new_piece:
             self._board[block.x][block.y] = new_piece.id
-
-    def _print_to_console(self):
-        if not self._print_board:
-            return
-
-        for j in range(self.height):
-            for i in range(self.width):
-                if j == 0 and i == 0:
-                    self._print_board_top_header()
-                if i == 0:
-                    self._print_board_wall()
-
-                cell = self._board[i][j]
-                print(f"{cell}", end='')
-
-                if i == self.width - 1:
-                    self._print_board_wall()
-
-            print()
-        self._print_board_horizontal_header()
-        print()
-
-    def _print_board_horizontal_header(self):
-        for _ in range(self.width):
-            print("-", end='')
-
-    def _print_board_wall(self):
-        print('|', end='')
-
-    def _print_board_top_header(self):
-        print()
-        print("Board")
-        self._print_board_horizontal_header()
-        print()
 
     def _is_legal_position(self, target, source=None):
         return self._is_in_boundaries(target) and \
