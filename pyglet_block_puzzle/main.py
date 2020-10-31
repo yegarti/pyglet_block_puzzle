@@ -15,10 +15,10 @@ HEIGHT = 500
 BLOCK_SIZE = WIDTH // 10
 
 
-class Tetris(pyglet.window.Window):
+class BlockPuzzle(pyglet.window.Window):
     def __init__(self, width, height, block_size):
         super().__init__(
-            caption='Tetris',
+            caption='Block Puzzle',
             width=width,
             height=height,
             fullscreen=False,
@@ -58,5 +58,5 @@ class Tetris(pyglet.window.Window):
 
 
 if __name__ == '__main__':
-    game = Tetris(WIDTH, HEIGHT, BLOCK_SIZE)
+    game = BlockPuzzle(WIDTH, HEIGHT, BLOCK_SIZE)
     pyglet.app.run()

@@ -15,7 +15,6 @@ setup_requirements = [ ]
 
 test_requirements = [
     'pytest',
-    'pycoverage'
 ]
 
 setup(
@@ -30,7 +29,7 @@ setup(
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.8',
     ],
-    description="Tetris game made using Pyglet",
+    description="Block Puzzle game made using Pyglet",
     install_requires=requirements,
     license="MIT license",
     long_description=readme,
@@ -41,7 +40,7 @@ setup(
     setup_requires=setup_requirements,
     test_suite='tests',
     tests_require=test_requirements,
-    url='https://github.com/yegarti/pyglet_tetris',
+    url='https://github.com/yegarti/pyglet_block_puzzle',
     version='0.1.0',
     zip_safe=False,
 )

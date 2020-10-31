@@ -1,32 +1,11 @@
-=============
-Pyglet Tetris
-=============
+===================
+Pyglet Block Puzzle
+===================
 
 
-.. image:: https://img.shields.io/pypi/v/pyglet_tetris.svg
-        :target: https://pypi.python.org/pypi/pyglet_tetris
+Block puzzle game made using Pyglet.
 
-.. image:: https://img.shields.io/travis/yegarti/pyglet_tetris.svg
-        :target: https://travis-ci.com/yegarti/pyglet_tetris
-
-.. image:: https://readthedocs.org/projects/pyglet-tetris/badge/?version=latest
-        :target: https://pyglet-tetris.readthedocs.io/en/latest/?badge=latest
-        :alt: Documentation Status
-
-
-
-
-Tetris game made using Pyglet
-
-
-* Free software: MIT license
-* Documentation: https://pyglet-tetris.readthedocs.io.
-
-
-Features
---------
-
-* TODO
+.. image:: blockpuzzle.png
 
 Credits
 -------
