@@ -4,9 +4,9 @@ import time
 import pyglet
 
 from pyglet.window import key
-from pyglet_tetris.block import Block
-from pyglet_tetris.board.board import Board
-from pyglet_tetris.shape import ShapeHelper
+from pyglet_block_puzzle.block import Block
+from pyglet_block_puzzle.board.board import Board
+from pyglet_block_puzzle.shape import ShapeHelper
 
 
 _logger = logging.getLogger(__name__)

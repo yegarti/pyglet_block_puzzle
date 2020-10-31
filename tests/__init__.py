@@ -1,1 +1,1 @@
-"""Unit test package for pyglet_tetris."""
+"""Unit test package for pyglet_block_puzzle."""

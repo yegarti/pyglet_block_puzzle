@@ -1,8 +1,8 @@
 import pytest
 
-from pyglet_tetris.board import Board, BoardBlock, BoardPiece
-from pyglet_tetris.color import Color
-from pyglet_tetris.shape import Straight, Ti, Shape
+from pyglet_block_puzzle.board import Board, BoardBlock, BoardPiece
+from pyglet_block_puzzle.color import Color
+from pyglet_block_puzzle.shape import Straight, Ti, Shape
 
 BOARD_SIZE = 10
 

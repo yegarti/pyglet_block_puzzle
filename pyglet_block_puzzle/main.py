@@ -2,13 +2,13 @@ import logging
 
 import pyglet
 
-from pyglet_tetris.game import Game
+from pyglet_block_puzzle.game import Game
 
 DEBUG = False
 
 _logger = logging.getLogger()
 logging.basicConfig()
-_logger.setLevel(logging.DEBUG if DEBUG else logging.INFO)
+_logger.setLevel(logging.DEBUG if DEBUG else logging.ERROR)
 
 WIDTH = 250
 HEIGHT = 500

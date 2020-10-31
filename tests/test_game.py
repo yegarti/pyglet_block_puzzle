@@ -1,7 +1,7 @@
 import pyglet
 import pytest
 
-from pyglet_tetris.game import Game
+from pyglet_block_puzzle.game import Game
 
 
 @pytest.fixture()

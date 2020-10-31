@@ -13,7 +13,10 @@ requirements = [
 
 setup_requirements = [ ]
 
-test_requirements = [ ]
+test_requirements = [
+    'pytest',
+    'pycoverage'
+]
 
 setup(
     author="Yehuda Garti",
@@ -32,9 +35,9 @@ setup(
     license="MIT license",
     long_description=readme,
     include_package_data=True,
-    keywords='pyglet_tetris',
-    name='pyglet_tetris',
-    packages=find_packages(include=['pyglet_tetris', 'pyglet_tetris.*']),
+    keywords='pyglet_block_puzzle',
+    name='pyglet_block_puzzle',
+    packages=find_packages(include=['pyglet_block_puzzle', 'pyglet_block_puzzle.*']),
     setup_requires=setup_requirements,
     test_suite='tests',
     tests_require=test_requirements,

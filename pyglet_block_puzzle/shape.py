@@ -1,7 +1,7 @@
 import random
 from abc import abstractmethod
 
-from pyglet_tetris.color import Color
+from pyglet_block_puzzle.color import Color
 
 
 class Shape:

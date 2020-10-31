@@ -1,10 +1,10 @@
 import logging
 import typing
 
-from pyglet_tetris.board.block import BoardBlock
-from pyglet_tetris.board.board_printer import BoardPrinter
-from pyglet_tetris.board.piece import BoardPiece
-from pyglet_tetris.shape import Shape
+from pyglet_block_puzzle.board.block import BoardBlock
+from pyglet_block_puzzle.board.board_printer import BoardPrinter
+from pyglet_block_puzzle.board.piece import BoardPiece
+from pyglet_block_puzzle.shape import Shape
 
 _logger = logging.getLogger(__name__)
 

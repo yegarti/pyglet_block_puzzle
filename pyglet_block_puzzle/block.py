@@ -1,5 +1,5 @@
 import pyglet
-from pyglet_tetris.color import Color
+from pyglet_block_puzzle.color import Color
 
 
 class Block(pyglet.shapes.Rectangle):
