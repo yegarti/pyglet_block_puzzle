@@ -5,7 +5,22 @@ Pyglet Block Puzzle
 
 Block puzzle game made using Pyglet.
 
+
 .. image:: blockpuzzle.png
+
+How to run
+----------
+Clone the project and install dependencies
+
+.. code-block:: bash
+
+    python setup.py install
+
+Run the main module
+
+.. code-block:: bash
+
+    python -m pyglet_block_puzzle.main
 
 Credits
 -------
